@@ -21,30 +21,28 @@ const arrUsuarios = [usuario1,usuario2,usuario3,usuario4];
 
 function ValidarUsuario(usuarioIngresado) 
 {
-    
     let idUsuario = -1;
 
-    arrUsuarios.forEach((usuario) => {
-        if(usuario.usuario == usuarioIngresado.value)
-        {
-            idUsuario = usuario.id;
-        }       
-    });
+    let UsuarioBusqueda = arrUsuarios.find(u => u.usuario == usuarioIngresado.value);
+
+    if(UsuarioBusqueda != undefined && !Number.isNaN(UsuarioBusqueda.id))
+    {
+        idUsuario = UsuarioBusqueda.id;
+    }
 
     return idUsuario;
 }
 
 function ValidarContraseña(IdUsuario, contraseñaIngresada) 
 {
-
     let contraseñaValida = false;
 
-         arrUsuarios.forEach((usuario) => {
-            if(usuario.contraseña == contraseñaIngresada.value && usuario.id == IdUsuario)
-            {
-                contraseñaValida = true;
-            }       
-        });
+    let BusquedaContraseña = arrUsuarios.find(c => c.contraseña == contraseñaIngresada.value);
+
+    if(BusquedaContraseña != undefined && !Number.isNaN(BusquedaContraseña.contraseña))
+    {
+        contraseñaValida = true;
+    }
 
     return contraseñaValida;
 }
@@ -57,6 +55,8 @@ function ValidarLogin(usuarioIngresado, contraseñaIngresada)
 
     if(loginValido)
     {
+        localStorage.setItem("usuario", usuarioIngresado.value);
+        localStorage.setItem("contraseña", contraseñaIngresada.value);
         Menu(IdUsuario);
     }
     else
@@ -78,22 +78,61 @@ btnIniciarSesion.addEventListener("click", () => ValidarLogin(usuario, contrase�
 
 function Menu(IdUsuario)
 {
+    //obtengo cotizacion del dolar
+    obtenerCotizacionDolar();
+
     //Remuevo login
     let Login = document.getElementById("login");
     document.body.removeChild(Login);
 
     //Creo div para info del usuario
     let DatosUsuario = document.createElement("div");
-    DatosUsuario.innerHTML = `<h2>Información del Usuario de HomeBanking</h2>
-                              <p>Nombre: ${arrUsuarios[IdUsuario].usuario}</p>`;
+
+    let TituloInfoUsuario = document.createElement("h2");
+    TituloInfoUsuario.innerText = "Información del Usuario de HomeBanking";
+
+    let TextoUsuario = document.createElement("p");
+    TextoUsuario.innerText = `Nombre: ${arrUsuarios[IdUsuario].usuario}`;
+
+    let TextoContenedorSaldo = document.createElement("p");
+    TextoContenedorSaldo.innerText = "Saldo";
+    let TextoSaldo = document.createElement("p");
+    TextoSaldo.setAttribute("id", "saldo");
+    TextoSaldo.innerHTML = "0";
+    TextoContenedorSaldo.appendChild(TextoSaldo);
+
+    let TextoCotizacion = document.createElement("p");
+    TextoCotizacion.setAttribute("id", "cotizacion");
+
+    DatosUsuario.appendChild(TituloInfoUsuario);
+    DatosUsuario.appendChild(TextoUsuario);
+    DatosUsuario.appendChild(TextoContenedorSaldo);
+    DatosUsuario.appendChild(TextoCotizacion);
     document.body.appendChild(DatosUsuario);
 
     //Creo div para menu del usuario
     let MenuUsuario = document.createElement("div");
-    MenuUsuario.innerHTML = `<ul>
-                                <li><a id="IngresarDinero" href="#">Ingresar Dinero</a></li>
-                                <li><a id="VerMovimientos" href="#">Ver Movimientos</a></li>
-                              </ul>`;
+
+    let ul = document.createElement("ul");
+
+    let liIngresar = document.createElement("li");
+    let aIngresar = document.createElement("a");
+    aIngresar.setAttribute("id", "IngresarDinero");
+    aIngresar.setAttribute("href", "#");
+    aIngresar.innerText = "Ingresar Dinero";
+    liIngresar.appendChild(aIngresar);
+
+    let liVer = document.createElement("li");
+    let aVer = document.createElement("a");
+    aVer.setAttribute("id", "VerMovimientos");
+    aVer.setAttribute("href", "#");
+    aVer.innerText = "Ver Movimientos";
+    liVer.appendChild(aVer);
+
+    ul.appendChild(liIngresar);
+    ul.appendChild(liVer);
+    MenuUsuario.appendChild(ul);
+
     document.body.appendChild(MenuUsuario);
 
     //Asocio evento click al punto de menu "Ingresar Dinero"
@@ -104,43 +143,85 @@ function Menu(IdUsuario)
     let VerMovimientos = document.getElementById("VerMovimientos");
     VerMovimientos.addEventListener("click", () => {
 
-        // Solo crear div de funcionalidad de movimientos si no existe
-        if(!document.getElementById("movimientos"))
-        {
-          let DivMovimientos = document.createElement("div");
-          DivMovimientos.setAttribute("id","movimientos");
-          document.body.appendChild(DivMovimientos);
+    // Solo crear div de funcionalidad de movimientos si no existe
+    if(!document.getElementById("movimientos"))
+    {
+        let DivMovimientos = document.createElement("div");
+        DivMovimientos.setAttribute("id","movimientos");
+        document.body.appendChild(DivMovimientos);
 
-          //Creo elementro de filtro de movimientos y lo agrego como hijo al div movimientos
-          let filtro = document.createElement("div");
-          filtro.innerHTML = `<input type="text" id="filtro" name="filtro" placeholder="Escriba aqui para buscar"><br><br>`;                
-          DivMovimientos.appendChild(filtro);
+        //Creo elementro de filtro de movimientos y lo agrego como hijo al div movimientos
+        let filtro = document.createElement("div");
 
-          //Hago una primer consulta de movimientos general sin filtro
-          VerMovimientosS(IdUsuario, DivMovimientos, arrUsuarios[IdUsuario].movimientos);      
-          
-          //Asocio evento input al elemento de filtro
-          let InputFiltro = document.getElementById("filtro");
-          InputFiltro.addEventListener("input", (e) =>{
-              let filtrado = arrUsuarios[IdUsuario].movimientos.filter((movimiento) => movimiento.descripcion.includes(e.target.value));
-              VerMovimientosS(IdUsuario,DivMovimientos, filtrado);
-          } );
+        let inputFiltro = document.createElement("input");
+        inputFiltro.setAttribute("type", "text");
+        inputFiltro.setAttribute("id", "filtro");
+        inputFiltro.setAttribute("name", "filtro");
+        inputFiltro.setAttribute("placeholder", "Escriba aqui para buscar");
 
-          //Creo elemento boton para volver al menu principal del usuario
-          let btnMenu = document.createElement("button");
-          btnMenu.innerText ="Volver";
-          DivMovimientos.appendChild(btnMenu);
+        filtro.appendChild(inputFiltro);
+        filtro.appendChild(document.createElement("br"));
+        filtro.appendChild(document.createElement("br"));
 
-          //Le asocio evento click para remover toda la funcionalidad de movimientos
-          btnMenu.addEventListener("click", () =>{
-              let EliminarDivMovimientos = document.getElementById("movimientos");
-              EliminarDivMovimientos.remove();
-          } )
+        DivMovimientos.appendChild(filtro);
+
+        //Hago una primer consulta de movimientos general sin filtro
+        VerMovimientosS(IdUsuario, DivMovimientos, arrUsuarios[IdUsuario].movimientos);
+
+        //Asocio evento input al elemento de filtro
+        let InputFiltro = document.getElementById("filtro");
+        InputFiltro.addEventListener("input", (e) =>{
+        
+            let filtrado = arrUsuarios[IdUsuario].movimientos.filter((movimiento) => movimiento.descripcion.includes(e.target.value));
+            console.log(filtrado);
+
+            VerMovimientosS(IdUsuario,DivMovimientos, filtrado);
+        } );
+
+        //Creo elemento boton para volver al menu principal del usuario
+        let btnMenu = document.createElement("button");
+        btnMenu.innerText ="Volver";
+        DivMovimientos.appendChild(btnMenu);
+
+        //Le asocio evento click para remover toda la funcionalidad de movimientos
+        btnMenu.addEventListener("click", () =>{
+            let EliminarDivMovimientos = document.getElementById("movimientos");
+            EliminarDivMovimientos.remove();
+        } )
+    }
+   });
+}
+
+function obtenerCotizacionDolar ()
+{
+    fetch('https://dolarapi.com/v1/dolares/oficial')
+    .then((respuesta) => {
+        if (!respuesta.ok) {
+              let TextoCotizacion = document.getElementById("cotizacion");
+              TextoCotizacion.innerText = "Las cotizaciones del dolar no estan disponibles en este momento";
         }
-    });
+        else
+        {
+             return respuesta.json();
+        }      
+    })
+    .then((respuestajson) => {
+        console.log(respuestajson)
+           let TextoCotizacion = document.getElementById("cotizacion");
+              TextoCotizacion.innerText = `Cotización Dolar → Compra: ${respuestajson.compra} | Venta: ${respuestajson.venta}`;
+    })
+    .catch((err) => console.error("Error:", err));
 }
 
 function VerMovimientosS(IdUsuario, DivMovimientos, Movimientos) {
+
+    let DivIngresoDinero = document.getElementById("IngresoDinero");
+
+    //Si esta renderizada la funcionalidad de ingreso de dinero la quito del dom
+    if(DivIngresoDinero)
+    {
+        document.body.removeChild(DivIngresoDinero);
+    }
 
     let ListadoMovimientos = "";
 
@@ -158,82 +239,127 @@ function VerMovimientosS(IdUsuario, DivMovimientos, Movimientos) {
     //Agrego html al elemento de Movimientos con el array que viene filtrado o sin filtrar
     ListadoMovimientos.innerHTML = Movimientos.map((movimiento) => 
     {
-    return `
-      <div style="
-        background: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-        padding: 12px;
-        margin-bottom: 10px;
-      ">
+      let tarjeta = document.createElement("div");
+      tarjeta.classList.add("tarjeta");
 
-        <div style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 6px;
-        ">
-          <span style="
-            color: #555;
-          ">
-            ${movimiento.descripcion}
-          </span>
+      let filaTop = document.createElement("div");
 
-          <span style="
-            color: #888;
-          ">
-            ${movimiento.fecha}
-          </span>
-        </div>
+      let spanDesc = document.createElement("span");
+      spanDesc.innerText = movimiento.descripcion;
 
-        <div style="
-          font-weight: bold;
-          color: ${movimiento.importe < 0 ? 'red' : 'green'};
-        ">
-          ${movimiento.importe}
-        </div>
+      let spanFecha = document.createElement("span");
+      spanFecha.innerText = movimiento.fecha;
 
-      </div>
-    `;
+      filaTop.appendChild(spanDesc);
+      filaTop.appendChild(spanFecha);
+
+      let importe = document.createElement("div");
+      importe.innerText = movimiento.importe;
+
+      if(movimiento.importe < 0) {
+        importe.classList.add("importe-negativo");
+      } else {
+        importe.classList.add("importe-positivo");
+      }
+
+      tarjeta.appendChild(filaTop);
+      tarjeta.appendChild(importe);
+
+     return tarjeta.outerHTML;
   }).join(""); // join quita las comas separadoras del array
 
-  DivMovimientos.appendChild(ListadoMovimientos);
+    DivMovimientos.appendChild(ListadoMovimientos);
 }
 
 function IngresarDineroO(IdUsuario) {
+
+    // si esta renderizado la accion de ver movimientos se elimina
+    DivMovimientos = document.getElementById("movimientos");
+    if(DivMovimientos)
+    {
+        document.body.removeChild(DivMovimientos);
+    }
 
     //Solo creo div de funcionalidad de Ingresar dinero si no existe
     if (!document.getElementById("IngresoDinero"))
     {
         let DivIngresoDinero = document.createElement("div");
         DivIngresoDinero.setAttribute("id", "IngresoDinero");
-        DivIngresoDinero.innerHTML = `<label>Importe:</label><br>
-                                      <input type="text" id="importe" name="importe" placeholder="Ingrese Importe"><br>
-                                      <label>Descripcion:</label><br>
-                                      <input type="text" id="descripcion" name="descripcion" placeholder=" Ingrese Descripcion"><br><br><br>
-                                      <button id="btnIngresarDinero">Ingresar</button>`;
+
+        let labelImporte = document.createElement("label");
+        labelImporte.innerText = "Importe:";
+
+        let br1 = document.createElement("br");
+
+        let inputImporte = document.createElement("input");
+        inputImporte.setAttribute("type", "text");
+        inputImporte.setAttribute("id", "importe");
+        inputImporte.setAttribute("name", "importe");
+        inputImporte.setAttribute("placeholder", "Ingrese Importe");
+
+        let br2 = document.createElement("br");
+
+        let labelDesc = document.createElement("label");
+        labelDesc.innerText = "Descripcion:";
+
+        let br3 = document.createElement("br");
+
+        let inputDesc = document.createElement("input");
+        inputDesc.setAttribute("type", "text");
+        inputDesc.setAttribute("id", "descripcion");
+        inputDesc.setAttribute("name", "descripcion");
+        inputDesc.setAttribute("placeholder", " Ingrese Descripcion");
+
+        let br4 = document.createElement("br");
+        let br5 = document.createElement("br");
+        let br6 = document.createElement("br");
+
+        let btn = document.createElement("button");
+        btn.setAttribute("id", "btnIngresarDinero");
+        btn.innerText = "Ingresar";
+
+        DivIngresoDinero.appendChild(labelImporte);
+        DivIngresoDinero.appendChild(br1);
+        DivIngresoDinero.appendChild(inputImporte);
+        DivIngresoDinero.appendChild(br2);
+        DivIngresoDinero.appendChild(labelDesc);
+        DivIngresoDinero.appendChild(br3);
+        DivIngresoDinero.appendChild(inputDesc);
+        DivIngresoDinero.appendChild(br4);
+        DivIngresoDinero.appendChild(br5);
+        DivIngresoDinero.appendChild(br6);
+        DivIngresoDinero.appendChild(btn);
 
         document.body.appendChild(DivIngresoDinero);
 
         let btnIngresarDinero = document.getElementById("btnIngresarDinero");
         btnIngresarDinero.addEventListener("click", () => {
 
-            let importe = document.getElementById("importe").value;
-            let descripcion = document.getElementById("descripcion").value;
+        let importe = document.getElementById("importe").value;
+        let descripcion = document.getElementById("descripcion").value;
 
-            if(importe != "" && importe != null && !isNaN(importe) && importe > 0)
-            {           
-                let movimiento = new Movimiento(importe, descripcion, new Date());
-                arrUsuarios[IdUsuario].movimientos.push(movimiento);
-                arrUsuarios[IdUsuario].saldo = arrUsuarios[IdUsuario].movimientos.forEach((movimiento) => { return movimiento += movimiento });       
-                alert(" \n Se ingreso el dinero correctamente");
-                let eliminarIngresoDinero = document.getElementById("IngresoDinero")
-                document.body.removeChild(eliminarIngresoDinero);  
-            }
-            else
-            {
-                alert("\n Importe invalido, PRESIONE ACEPTAR PARA VOLVER AL MENU.");
-            }
-        })
+        if(importe != "" && importe != null && !isNaN(importe) && importe > 0)
+        {
+            let movimiento = new Movimiento(importe, descripcion, new Date());
+            arrUsuarios[IdUsuario].movimientos.push(movimiento);
+                    
+            let saldo = arrUsuarios[IdUsuario].movimientos.reduce((saldo, mov) => {
+                        return parseInt(saldo) + parseInt(mov.importe);
+                        }, 0);
+                        
+            arrUsuarios[IdUsuario].saldo = saldo;
+
+            let TextoSaldo = document.getElementById("saldo");
+            TextoSaldo.innerHTML = saldo;
+
+            alert(" \n Se ingreso el dinero correctamente");
+            let eliminarIngresoDinero = document.getElementById("IngresoDinero")
+            document.body.removeChild(eliminarIngresoDinero);
+        }
+        else
+        {
+            alert("\n Importe invalido, PRESIONE ACEPTAR PARA VOLVER AL MENU.");
+        }
+      })
     }
 }

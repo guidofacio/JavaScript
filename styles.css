@@ -1,0 +1,16 @@
+/* Tarjeta movimiento */
+.tarjeta {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.importe-positivo {
+  color: green;
+}
+
+.importe-negativo{
+  color: red;
+}
