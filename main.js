@@ -58,10 +58,11 @@ function ValidarLogin(usuarioIngresado, contraseñaIngresada)
         localStorage.setItem("usuario", usuarioIngresado.value);
         localStorage.setItem("contraseña", contraseñaIngresada.value);
         Menu(IdUsuario);
+        Swal.fire('Bienvenido', 'Ahora con nuestro HomeBanking en linea podes operar desde cualquier lugar', 'success');
     }
     else
     {
-        alert("Usuario o Contraseña Incorrectos.")
+        Swal.fire('Error', 'Usuario o Contraseña Incorrectos.', 'error');
     }        
 }
 
@@ -173,7 +174,6 @@ function Menu(IdUsuario)
         InputFiltro.addEventListener("input", (e) =>{
         
             let filtrado = arrUsuarios[IdUsuario].movimientos.filter((movimiento) => movimiento.descripcion.includes(e.target.value));
-            console.log(filtrado);
 
             VerMovimientosS(IdUsuario,DivMovimientos, filtrado);
         } );
@@ -206,7 +206,6 @@ function obtenerCotizacionDolar ()
         }      
     })
     .then((respuestajson) => {
-        console.log(respuestajson)
            let TextoCotizacion = document.getElementById("cotizacion");
               TextoCotizacion.innerText = `Cotización Dolar → Compra: ${respuestajson.compra} | Venta: ${respuestajson.venta}`;
     })
@@ -352,13 +351,13 @@ function IngresarDineroO(IdUsuario) {
             let TextoSaldo = document.getElementById("saldo");
             TextoSaldo.innerHTML = saldo;
 
-            alert(" \n Se ingreso el dinero correctamente");
+            Swal.fire('Éxito', 'Se ingreso el dinero correctamente', 'success');
             let eliminarIngresoDinero = document.getElementById("IngresoDinero")
             document.body.removeChild(eliminarIngresoDinero);
         }
         else
         {
-            alert("\n Importe invalido, PRESIONE ACEPTAR PARA VOLVER AL MENU.");
+            Swal.fire('Error', 'Importe invalido, PRESIONE ACEPTAR PARA VOLVER AL MENU.', 'error');
         }
       })
     }
